@@ -48,15 +48,15 @@
 
     <!-- the body of your page goes here -->
     <div class="container-fluid bg-dark text-light p-5">
-        <div class="container bg-dark p-5">
-            <h1 class="display-4">Good morning, <span id="name-goes-here"></span></h1>
-            <hr>
-            <p>Quote of the day: <span id="quote-goes-here">...</span></p>
+        <div class="container bg-light p-5">
+            <h1 class="display-4 text-danger">Hello, <span id="name-goes-here"></span></h1>
+            <hr class="text-dark">
+            <p class="text-dark">Quote of the day: <span id="quote-goes-here">...</span></p>
         </div>
     </div>
 
     <template id="hikeCardTemplate">
-        <div class="card">
+        <div class="card py-2 mx-auto" style="width: 18rem;">
             <img class="card-img-top">
             <div class="card-body">
                 <h5 class="card-title">placeholder</h5>
@@ -71,7 +71,7 @@
     </template>
 
     <div class="container">
-        <h1>Some popular hikes</h1>
+        <h2 class="text-danger text-center mt-1 py-2">Some famous hikes around the world</h2>
         <!-- Here is container for cards  -->
         <div class="container">
             <div id="hikeCardGroup" class="row row-cols-auto">
