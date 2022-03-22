@@ -1,3 +1,20 @@
+var currentUser;
+firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+        currentUser = db.collection("users").doc(user.uid);   //global
+        console.log(currentUser);
+
+        // the following functions are always called when someone is logged in
+        read_display_Quote();
+        insertName();
+        populateCardsDynamically();
+    } else {
+        // No user is signed in.
+        console.log("No user is signed in");
+        window.location.href = "login.html";
+    }
+});
+
 function read_display_Quote(){
     //console.log("inside the function")
 
@@ -10,24 +27,17 @@ function read_display_Quote(){
 }
 read_display_Quote();
 
-function insertName(){
-// to check if the user is logged in:
- firebase.auth().onAuthStateChanged(user =>{
-     if (user){
-         console.log(user.uid); // let me to know who is the user that logged in to get the UID
-        currentUser = db.collection("users").doc(user.uid); // will to to the firestore and go to the document of the user
-        currentUser.get().then(userDoc=>{
-            //get the user name
-            var user_Name= userDoc.data().name;
-            console.log(user_Name);
-            $("#name-goes-here").text(user_Name); //jquery
-            // document.getElementByID("name-goes-here").innetText=user_Name;
-        })    
-    }
-
- })
-}
-insertName();
+function insertName() {
+    currentUser.get().then(userDoc=>{
+        //get the user name
+        var user_Name= userDoc.data().name;
+        console.log(user_Name);
+        $("#name-goes-here").text(user_Name); //jquery
+        // document.getElementByID("name-goes-here").innetText=user_Name;
+})
+}   
+// }
+// insertName();
 
 function writeHikes() {
     //define a variable for the collection you want to create in Firestore to populate data
@@ -39,8 +49,9 @@ function writeHikes() {
         city: "Burnaby",
         province: "BC",
         level: "easy",
-        length: "10 km",
-        length_time: "2h 33mm"
+        length: 10,          //number value
+        length_time: 60,     //number value
+        last_updated: firebase.firestore.FieldValue.serverTimestamp()  //current system time
     });
     hikesRef.add({
         id: "AM01",
@@ -48,8 +59,9 @@ function writeHikes() {
         city: "Anmore",
         province: "BC",
         level: "moderate",
-        length: "10.5 km",
-        length_time: "3h 17mm"
+        length: 10.5,      //number value
+        length_time: 80,   //number value
+        last_updated: firebase.firestore.Timestamp.fromDate(new Date("March 10, 2022"))
     });
     hikesRef.add({
         id: "NV01",
@@ -57,8 +69,9 @@ function writeHikes() {
         city: "North Vancouver",
         province: "BC",
         level: "hard",
-        length: "8.2 km",
-        length_time: "3h 20m"
+        length: 8.2,        //number value
+        length_time: 120,   //number value
+        last_updated: firebase.firestore.Timestamp.fromDate(new Date("January 1, 2022"))
     });
 }
 
@@ -66,7 +79,10 @@ function populateCardsDynamically() {
     let hikeCardTemplate = document.getElementById("hikeCardTemplate");
     let hikeCardGroup = document.getElementById("hikeCardGroup");
     
-    db.collection("Hikes").get()
+    db.collection("Hikes")
+        .orderBy("length","desc")  
+        .limit(2)
+        .get()
         .then(allHikes => {
             allHikes.forEach(doc => {
                 var hikeName = doc.data().name; //gets the name field
@@ -74,15 +90,43 @@ function populateCardsDynamically() {
                 var hikeLength = doc.data().length; //gets the length field
                 let testHikeCard = hikeCardTemplate.content.cloneNode(true);
                 testHikeCard.querySelector('.card-title').innerHTML = hikeName;
-                testHikeCard.querySelector('.card-length').innerHTML = hikeLength;
+
+                // testHikeCard.querySelector('.card-length').innerHTML = hikeLength;
+                testHikeCard.querySelector('.card-length').innerHTML = 
+                "Length: " + doc.data().length + " km <br>" +
+                "Duration: " + doc.data().length_time + "min <br>" +
+                "Last updated: " + doc.data().last_updated.toDate(); 
+
                 testHikeCard.querySelector('a').onclick = () => setHikeData(hikeID);
+
+                testHikeCard.querySelector('.read-more').href = "eachHike.html?hikeName="+hikeName +"&id=" + hikeID;
+                
                 testHikeCard.querySelector('img').src = `./images/${hikeID}.jpg`;
+
+                testHikeCard.querySelector('i').id = 'save-' + hikeID;
+                
+                testHikeCard.querySelector('i').onclick = () => saveBookmark(hikeID);
+
                 hikeCardGroup.appendChild(testHikeCard);
             })
 
         })
 }
-populateCardsDynamically();
+// populateCardsDynamically();
+
+function saveBookmark(hikeID) {
+    currentUser.set({
+            bookmarks: firebase.firestore.FieldValue.arrayUnion(hikeID)
+        }, {
+            merge: true
+        })
+        .then(function () {
+            console.log("bookmark has been saved for: " + currentUser);
+            var iconID = 'save-' + hikeID;
+            //console.log(iconID);
+            document.getElementById(iconID).innerText = 'bookmark';
+        });
+}
 
 function setHikeData(id){
     localStorage.setItem ('hikeID', id);
